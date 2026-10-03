@@ -123,8 +123,8 @@
       const step = [1, 2, 5, 10].map((factor) => factor * magnitude).find((candidate) => candidate >= roughStep);
       const maximum = metric.percent ? 100 : Math.max(step, Math.ceil(largest / step) * step);
       const tickStep = metric.percent ? 20 : step;
-      const chartWidth = Math.max(640, card.querySelector('.chart-viewport').clientWidth);
-      const dimensions = { width: chartWidth, height: 390, left: 62, right: 20, top: 35, bottom: 305 };
+      const chartWidth = Math.max(720, card.querySelector('.chart-viewport').clientWidth);
+      const dimensions = { width: chartWidth, height: 390, left: 66, right: 20, top: 35, bottom: 305 };
       const availableWidth = dimensions.width - dimensions.left - dimensions.right;
       const groupWidth = availableWidth / Math.max(1, data.length);
       const plotHeight = dimensions.bottom - dimensions.top;
@@ -185,7 +185,7 @@
         });
         const label = svgElement('text', { x: center, y: dimensions.bottom + 30, 'text-anchor': 'middle', class: 'chart-category' });
         const lines = category.endsWith(' (native)') ? [category.slice(0, -9), '(native)'] : [category];
-        lines.forEach((line, index) => label.append(svgElement('tspan', { x: center, dy: index ? 18 : 0 }, line)));
+        lines.forEach((line, index) => label.append(svgElement('tspan', { x: center, dy: index ? 20 : 0 }, line)));
         svg.append(label);
       });
       plot.replaceChildren(svg);

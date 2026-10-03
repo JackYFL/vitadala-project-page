@@ -4,9 +4,15 @@ if (siteHeader && navigation) {
   const links = Array.from(navigation.querySelectorAll('a[href^="#"]'));
   const sections = Array.from(document.querySelectorAll('main > section[id]'));
   let pendingFrame = false;
+  let previousHeaderHeight = 0;
 
   function updateCurrentSection() {
-    const activationLine = siteHeader.getBoundingClientRect().height + Math.min(160, window.innerHeight * .2);
+    const headerHeight = Math.ceil(siteHeader.getBoundingClientRect().height);
+    if (headerHeight !== previousHeaderHeight) {
+      document.documentElement.style.setProperty('--header-height', `${headerHeight}px`);
+      previousHeaderHeight = headerHeight;
+    }
+    const activationLine = headerHeight + Math.min(160, window.innerHeight * .2);
     let currentId = '';
     for (const section of sections) {
       if (section.getBoundingClientRect().top <= activationLine) currentId = section.id;
