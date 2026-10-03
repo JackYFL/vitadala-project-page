@@ -12,7 +12,17 @@ To preview locally from this `project_page` directory:
 python -m http.server 8000
 ```
 
-Then visit `http://localhost:8000/`. To publish with GitHub Pages, copy this directory into a repository configured to serve its root or `/docs` folder. This page requires no build step or external assets.
+Then visit `http://localhost:8000/`. This page requires no build step or external assets.
+
+## GitHub Pages deployment
+
+Target repository: [JackYFL/vitadala-project-page](https://github.com/JackYFL/vitadala-project-page).
+
+The [deployment workflow](.github/workflows/deploy-pages.yml) publishes the static page on every push to `main`; it can also be run manually from the Actions tab. Only the HTML, CSS, JavaScript, and `assets/` are included in the site artifact.
+
+For the initial setup, open **Settings → Pages → Build and deployment**, and select **GitHub Actions** as the source. This requires a repository administrator or maintainer; SSH push access alone cannot change the Pages settings. See [GitHub's publishing-source guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
+
+After a successful deployment, the site is available at <https://jackyfl.github.io/vitadala-project-page/> and the paper PDF at <https://jackyfl.github.io/vitadala-project-page/assets/ViT-AdaLA.pdf>. Check the workflow's deployment result before treating these URLs as live.
 
 After revising the paper, run these commands from this `project_page` directory to refresh the bundled PDF and any changed figure previews:
 
