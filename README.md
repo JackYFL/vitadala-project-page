@@ -1,6 +1,6 @@
 # ViT-AdaLA project page
 
-This directory is a static, dependency-free project page for the current ViT-AdaLA paper. It uses figures and measurements from `../../rebuttal/NeurlPS26-AdaLA/example_paper.tex` and its included sections and tables. The page links to the paper PDF and the [research implementation](https://github.com/JackYFL/LinearViT_MT).
+This directory is a static, dependency-free project page for the current ViT-AdaLA paper. It uses figures and measurements from `../../rebuttal/NeurlPS26-AdaLA/example_paper.tex` and its included sections and tables. The page links to the [paper on arXiv](https://arxiv.org/pdf/2603.16063) and the [research implementation](https://github.com/JackYFL/ViT-AdaLA).
 
 The [ViT-AdaLA icon](assets/vit-adala-icon.svg) is used in the navigation bar and as the browser favicon. It depicts a visual patch grid transitioning into patches along a straight line, representing ViT linearization. Its square aspect ratio is preserved on desktop and mobile. The previous [symbol](assets/logo.svg) and [horizontal lockup](assets/logo-lockup.svg) remain available as alternative assets.
 
@@ -22,7 +22,7 @@ The [deployment workflow](.github/workflows/deploy-pages.yml) publishes the stat
 
 For the initial setup, open **Settings → Pages → Build and deployment**, and select **GitHub Actions** as the source. This requires a repository administrator or maintainer; SSH push access alone cannot change the Pages settings. See [GitHub's publishing-source guide](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site).
 
-After a successful deployment, the site is available at <https://jackyfl.github.io/vitadala-project-page/> and the paper PDF at <https://jackyfl.github.io/vitadala-project-page/assets/ViT-AdaLA.pdf>. Check the workflow's deployment result before treating these URLs as live.
+After a successful deployment, the site is available at <https://jackyfl.github.io/vitadala-project-page/>. The Paper button opens <https://arxiv.org/pdf/2603.16063>; the bundled PDF remains a local snapshot rather than the primary paper link. Check the workflow's deployment result before treating the site URL as live.
 
 After revising the paper, run these commands from this `project_page` directory to refresh the bundled PDF and any changed figure previews:
 
