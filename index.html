@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#ffffff">
+  <meta name="description" content="ViT-AdaLA adapts pretrained vision transformers to linear attention with attention alignment, feature alignment, and downstream transfer.">
+  <title>ViT-AdaLA: Adapting Vision Transformers with Linear Attention</title>
+  <link rel="icon" type="image/svg+xml" href="assets/vit-adala-icon.svg">
+  <link rel="stylesheet" href="styles.css?v=navigation-polish-1">
+  <script src="script.js?v=navigation-expanded-1" defer></script>
+  <script src="results.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a class="brand" href="#top" aria-label="ViT-AdaLA home" title="ViT-AdaLA · visual patch grid to linear attention">
+        <img src="assets/vit-adala-icon.svg" width="48" height="48" alt="">
+        <span>ViT-AdaLA</span>
+      </a>
+      <nav id="main-navigation" aria-label="Main navigation">
+        <a href="#overview">Overview</a>
+        <a href="#abstract">Abstract</a>
+        <a href="#motivation">Motivation</a>
+        <a href="#method">Method</a>
+        <a href="#results">Results</a>
+        <a href="#ablations">Ablations</a>
+        <a href="#efficiency">Efficiency</a>
+        <a href="#transfer">Transfer</a>
+        <a href="#citation">BibTeX</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="paper-title">
+      <div class="container hero-inner">
+        <p class="venue">NeurIPS 2026</p>
+        <h1 id="paper-title">ViT-AdaLA: Adapting Vision Transformers with Linear Attention</h1>
+        <p class="tagline">A three-stage alignment framework that transfers the knowledge of pretrained vision transformers to linear-attention backbones.</p>
+        <p class="authors">
+          <span><a href="https://jackyfl.github.io/" target="_blank" rel="noopener noreferrer" title="Yifan Li’s personal homepage">Yifan Li</a><sup>1</sup></span>,
+          <span><a href="https://david-yoon.github.io/" target="_blank" rel="noopener noreferrer" title="Seunghyun Yoon’s personal homepage">Seunghyun Yoon</a><sup>2</sup></span>,
+          <span><a href="https://laiviet.github.io/" target="_blank" rel="noopener noreferrer" title="Viet Dac Lai’s personal homepage">Viet Dac Lai</a><sup>2</sup></span>,
+          <span><a href="https://research.adobe.com/person/franck-dernoncourt/" target="_blank" rel="noopener noreferrer" title="Franck Dernoncourt’s Adobe Research profile">Franck Dernoncourt</a><sup>2</sup></span>,
+          <span><a href="https://research.adobe.com/person/jason-kuen/" target="_blank" rel="noopener noreferrer" title="Jason Kuen’s Adobe Research profile">Jason Kuen</a><sup>2</sup></span>,
+          <span><a href="https://www.egr.msu.edu/~yukong/" target="_blank" rel="noopener noreferrer" title="Yu Kong’s personal homepage">Yu Kong</a><sup>1</sup></span>,
+          <span><a href="https://sites.google.com/site/trungbuistanford/" target="_blank" rel="noopener noreferrer" title="Trung Bui’s personal homepage">Trung Bui</a><sup>2</sup></span>
+        </p>
+        <p class="affiliations"><sup>1</sup> Michigan State University &nbsp;&nbsp; <sup>2</sup> Adobe Research</p>
+        <div class="hero-links">
+          <a class="pill-button" href="assets/ViT-AdaLA.pdf">Paper</a>
+          <a class="pill-button" href="https://github.com/JackYFL/LinearViT_MT" target="_blank" rel="noopener noreferrer">Code</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section overview-section" id="overview" aria-labelledby="overview-title">
+      <div class="container">
+        <figure class="figure-card overview-figure">
+          <img src="assets/pipeline.png" width="1905" height="565" alt="ViT-AdaLA aligns each linear-attention block to a frozen softmax teacher, then aligns full-network features before downstream fine-tuning.">
+          <figcaption>ViT-AdaLA progressively aligns attention modules and final-layer features before transferring the linearized backbone to downstream tasks.</figcaption>
+        </figure>
+        <h2 class="overview-title" id="overview-title">Linearize a pretrained ViT without discarding its visual prior.</h2>
+        <div class="takeaway-grid">
+          <article class="simple-card">
+            <h3>Reuse pretrained VFMs</h3>
+            <p>Begin with an existing softmax-based vision transformer instead of training a linear-attention model from scratch.</p>
+          </article>
+          <article class="simple-card">
+            <h3>Align locally and globally</h3>
+            <p>Match attention blocks first, then recover the complete model’s feature representation with a frozen teacher.</p>
+          </article>
+          <article class="simple-card">
+            <h3>Transfer across tasks</h3>
+            <p>Use the adapted backbone for classification and segmentation; the alignment recipe also works with other attention modules.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="abstract" aria-labelledby="abstract-title">
+      <div class="container narrow">
+        <h2 id="abstract-title">Abstract</h2>
+        <p>Vision foundation models built on Vision Transformers perform well across many tasks, but softmax attention becomes expensive for long visual sequences. Existing linear-attention ViTs often require training from scratch, while linearization methods designed for language models do not transfer well to vision. ViT-AdaLA adapts a pretrained ViT in three stages: attention alignment, feature alignment, and supervised fine-tuning. The first stage matches individual linear-attention blocks to the original softmax blocks; the second corrects accumulated errors by matching final-layer features to a frozen teacher. Experiments on classification and segmentation show that this simple, model-agnostic adaptation strategy preserves much of the foundation model’s performance while improving scalability at higher resolution.</p>
+      </div>
+    </section>
+
+    <section class="section" id="motivation" aria-labelledby="motivation-title">
+      <div class="container">
+        <h2 id="motivation-title">Motivation</h2>
+        <p class="section-intro">High-resolution images produce longer visual sequences, making quadratic softmax attention increasingly costly. Can we obtain linear-attention efficiency without discarding the pretrained visual knowledge that makes a VFM useful?</p>
+        <div class="figure-card motivation-figure">
+          <div class="motivation-figure-grid">
+            <figure class="motivation-panel">
+              <img class="motivation-linearization" src="assets/motivation-linearization.png" width="617" height="433" loading="lazy" alt="Figure 2(a): training a linearized ViT from scratch versus adapting a pretrained ViT into a linearized model.">
+              <figcaption>(a) From-scratch training vs. linearization</figcaption>
+            </figure>
+            <figure class="motivation-panel">
+              <img class="motivation-vision-transfer" src="assets/motivation-vision-transfer.png" width="1051" height="447" loading="lazy" alt="Figure 2(b): a decoder-only LLM generates tokens, whereas a ViT produces spatial features for a separate task head; the diagram contrasts temporal and spatial error effects.">
+              <figcaption>(b) Temporal vs. spatial error propagation</figcaption>
+            </figure>
+          </div>
+        </div>
+        <div class="motivation-copy-grid">
+          <article>
+            <h3>Reuse knowledge, don’t relearn it</h3>
+            <p>Training a new linear-attention backbone from scratch must first acquire its own visual prior. Instead, we start from an existing VFM such as DINOv2 or CLIP and transfer that prior to a linearized model. Adaptation still requires training; the goal is to reuse pretrained knowledge.</p>
+          </article>
+          <article>
+            <h3>Preserve features, not just attention</h3>
+            <p>A ViT supplies spatial features to downstream task heads. Attention replacement can alter patch relationships and intermediate features across layers, so a good local approximation need not preserve the full encoder’s representation. This motivates attention alignment followed by global feature alignment.</p>
+            <p class="motivation-caveat">Accumulated representation drift is not exclusive to ViTs. Here, the focus is preserving spatial consistency and transferable visual features.</p>
+          </article>
+        </div>
+        <p class="motivation-goal" id="motivation-goal"><strong>Our goal:</strong> linearize the vision foundation models <strong>without training from scratch</strong>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="method" aria-labelledby="method-title">
+      <div class="container">
+        <h2 id="method-title">Method</h2>
+        <p class="section-intro">The main contribution is a progressive adaptation paradigm, not a new linear-attention architecture. Vanilla linear attention is the default instance.</p>
+        <div class="method-grid">
+          <article class="simple-card method-card">
+            <span class="step-label">Stage 1</span>
+            <h3>Attention alignment</h3>
+            <p>Each linear-attention block sees the same input as its frozen softmax counterpart. We tune its Q, K, and V projections to match the attention output.</p>
+            <p class="card-detail">Local alignment · COCO</p>
+          </article>
+          <article class="simple-card method-card">
+            <span class="step-label">Stage 2</span>
+            <h3>Feature alignment</h3>
+            <p>We update the full linearized student to match the frozen teacher’s final features, correcting approximation errors accumulated across blocks.</p>
+            <p class="card-detail">Global alignment · ImageNet-22K</p>
+          </article>
+          <article class="simple-card method-card">
+            <span class="step-label">Stage 3</span>
+            <h3>Downstream fine-tuning</h3>
+            <p>A task head and the adapted backbone are fine-tuned for classification or segmentation. The Stage-2 backbone can also be used frozen.</p>
+            <p class="card-detail">Task transfer</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="results" aria-labelledby="results-title">
+      <div class="container">
+        <h2 id="results-title">Experimental Results</h2>
+        <p class="section-intro">We evaluate DINOv2-L, CLIP-L, SigLIP-L, and an ImageNet-1K-pretrained ViT-L. Headline results and detailed baseline comparisons use DINOv2-L. Within each task and backbone, methods share downstream data, task heads, and full fine-tuning budgets; baselines retain their native conversion procedures.</p>
+        <div class="result-highlights" aria-label="Headline ViT-AdaLA results">
+          <div class="highlight"><strong>86.0%</strong><span>ImageNet-1K top-1<br>86.8% softmax teacher</span></div>
+          <div class="highlight"><strong>55.55</strong><span>ADE20K mIoU<br>56.73 softmax teacher</span></div>
+          <div class="highlight"><strong>78.73</strong><span>Cityscapes mIoU at 1024²<br>2.26× softmax throughput</span></div>
+        </div>
+
+        <h3>Classification and segmentation (DINOv2-L)</h3>
+        <div class="chart-card" data-result-chart="methods">
+          <div class="interactive-chart" hidden>
+            <div class="chart-toolbar">
+              <label for="method-metric">Dataset
+                <select id="method-metric"><option value="imagenet">ImageNet-1K</option><option value="ade20k">ADE20K</option></select>
+              </label>
+              <div class="chart-legend" aria-label="Chart legend"></div>
+            </div>
+            <p class="chart-context" role="status" aria-live="polite"></p>
+            <div class="chart-viewport"><div class="chart-plot"></div></div>
+            <p class="chart-hint">Hover, tap, or focus a bar for exact values. All axes start at zero.</p>
+            <div class="chart-tooltip" hidden></div>
+          </div>
+          <details class="chart-data" open>
+            <summary>View exact data</summary>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Method</th><th scope="col">ImageNet-1K top-1 (%) ↑</th><th scope="col">ADE20K mIoU ↑</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Softmax teacher</th><td>86.8</td><td>56.73</td></tr>
+              <tr><th scope="row">LoLCATS</th><td>61.6</td><td>17.42</td></tr>
+              <tr><th scope="row">Monarch (native)</th><td>82.7</td><td>44.95</td></tr>
+              <tr class="ours"><th scope="row">ViT-AdaLA</th><td>86.0</td><td>55.55</td></tr>
+            </tbody>
+          </table>
+        </div>
+          </details>
+        </div>
+
+        <h3>Transfer across pretrained vision backbones</h3>
+        <p class="table-intro">The same adaptation recipe applies to DINOv2, CLIP, SigLIP, and a supervised ImageNet-1K ViT. Each backbone is compared with its own softmax teacher.</p>
+        <div class="chart-card" data-result-chart="backbones">
+          <div class="interactive-chart" hidden>
+            <div class="chart-toolbar">
+              <label for="backbone-metric">Dataset
+                <select id="backbone-metric"><option value="imagenet">ImageNet-1K</option><option value="ade20k">ADE20K</option><option value="cityscapes">Cityscapes</option></select>
+              </label>
+              <div class="chart-legend" aria-label="Chart legend"></div>
+            </div>
+            <p class="chart-context" role="status" aria-live="polite"></p>
+            <div class="chart-viewport"><div class="chart-plot"></div></div>
+            <p class="chart-hint">Only backbones with reported results for the selected dataset are shown.</p>
+            <div class="chart-tooltip" hidden></div>
+          </div>
+          <details class="chart-data" open>
+            <summary>View exact data</summary>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th scope="col" rowspan="2">Backbone</th><th scope="colgroup" colspan="2">ImageNet-1K top-1 (%) ↑</th><th scope="colgroup" colspan="2">ADE20K mIoU ↑</th><th scope="colgroup" colspan="2">Cityscapes mIoU ↑</th></tr>
+              <tr><th scope="col">Teacher</th><th scope="col">ViT-AdaLA</th><th scope="col">Teacher</th><th scope="col">ViT-AdaLA</th><th scope="col">Teacher</th><th scope="col">ViT-AdaLA</th></tr>
+            </thead>
+            <tbody>
+              <tr><th scope="row">DINOv2-L</th><td>86.8</td><td><strong>86.0</strong></td><td>56.73</td><td><strong>55.55</strong></td><td>80.98</td><td><strong>78.73</strong></td></tr>
+              <tr><th scope="row">CLIP-L</th><td>86.4</td><td><strong>85.5</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+              <tr><th scope="row">SigLIP-L</th><td>86.9</td><td><strong>86.4</strong></td><td>54.40</td><td><strong>53.16</strong></td><td>76.53</td><td><strong>73.33</strong></td></tr>
+              <tr><th scope="row">IN-1K ViT-L</th><td>—</td><td>—</td><td>50.83</td><td><strong>49.75</strong></td><td>72.21</td><td><strong>68.25</strong></td></tr>
+            </tbody>
+          </table>
+        </div>
+          </details>
+        </div>
+        <p class="caption-note">ImageNet-1K and ADE20K use 512² inputs; Cityscapes uses 1024². These are downstream full fine-tuning results, not frozen-backbone evaluations. Backbones without reported results for the selected dataset are omitted. Classification and ADE20K values follow the main comparison tables.</p>
+
+        <h3>High-resolution segmentation on Cityscapes</h3>
+        <p class="table-intro">DINOv2-L with the same Mask2Former head and downstream fine-tuning budget. We report both 512 × 512 and 1024 × 1024 input resolutions.</p>
+        <div class="chart-card" data-result-chart="cityscapes">
+          <div class="interactive-chart" hidden>
+            <div class="chart-toolbar">
+              <label for="cityscapes-metric">Metric / resolution
+                <select id="cityscapes-metric"><option value="miou512">mIoU · 512²</option><option value="miou1024" selected>mIoU · 1024²</option><option value="throughput">Throughput · 1024²</option><option value="memory">Peak memory · 1024²</option></select>
+              </label>
+              <div class="chart-legend" aria-label="Chart legend"></div>
+            </div>
+            <p class="chart-context" role="status" aria-live="polite"></p>
+            <div class="chart-viewport"><div class="chart-plot"></div></div>
+            <p class="chart-hint">Switch between quality, throughput, and memory. Efficiency measurements use batch size 1.</p>
+            <div class="chart-tooltip" hidden></div>
+          </div>
+          <details class="chart-data" open>
+            <summary>View exact data</summary>
+        <div class="table-scroll">
+          <table>
+            <thead><tr><th scope="col">Method</th><th scope="col">512² mIoU ↑</th><th scope="col">1024² mIoU ↑</th><th scope="col">1024² throughput (images/s) ↑</th><th scope="col">1024² memory (GB) ↓</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">Softmax teacher</th><td>74.86</td><td>80.98</td><td>7.07</td><td>3.2836</td></tr>
+              <tr><th scope="row">LoLCATS</th><td>34.71</td><td>33.66</td><td>15.38</td><td>1.3823</td></tr>
+              <tr><th scope="row">Nyströmformer (native)</th><td>48.97</td><td>47.56</td><td>14.61</td><td>1.3764</td></tr>
+              <tr><th scope="row">Monarch (native)</th><td>50.84</td><td>55.18</td><td>9.74</td><td>1.5469</td></tr>
+              <tr class="ours"><th scope="row">ViT-AdaLA</th><td>72.40</td><td>78.73</td><td>15.95</td><td>1.3764</td></tr>
+            </tbody>
+          </table>
+        </div>
+          </details>
+        </div>
+        <p class="caption-note">At 1024², ViT-AdaLA achieves 78.73 mIoU with 2.26× the softmax teacher’s throughput and 58.1% lower peak memory. Throughput and memory use batch size 1.</p>
+      </div>
+    </section>
+
+    <section class="section" id="ablations" aria-labelledby="ablations-title">
+      <div class="container">
+        <h2 id="ablations-title">Ablation &amp; Key Insights</h2>
+        <p class="section-intro">Keeping the linear-attention architecture fixed reveals two distinct roles: Stage 1 provides local initialization, while Stage 2 recovers end-to-end compatibility with the pretrained encoder.</p>
+
+        <h3 class="ablation-heading">What does each alignment stage contribute?</h3>
+        <div class="chart-card" data-result-chart="ablation">
+          <div class="interactive-chart" hidden>
+            <div class="chart-toolbar">
+              <label for="ablation-metric">Task / backbone
+                <select id="ablation-metric"><option value="ade20k">ADE20K · DINOv2-L</option><option value="samhq">SAM-HQ · SAM-H</option></select>
+              </label>
+              <div class="chart-legend" aria-label="Chart legend"></div>
+            </div>
+            <p class="chart-context" role="status" aria-live="polite"></p>
+            <div class="chart-viewport"><div class="chart-plot"></div></div>
+            <p class="chart-hint">Compare within each task. Hover, tap, or focus a bar for exact values.</p>
+            <div class="chart-tooltip" hidden></div>
+          </div>
+          <details class="chart-data" open>
+            <summary>View exact data</summary>
+            <div class="table-scroll">
+              <table class="ablation-table">
+                <thead><tr><th scope="col">Alignment</th><th scope="col">Stage 1</th><th scope="col">Stage 2</th><th scope="col">ADE20K mIoU ↑</th><th scope="col">SAM-HQ IoU ↑</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">No alignment</th><td><span aria-label="disabled">✗</span></td><td><span aria-label="disabled">✗</span></td><td>22.92</td><td>63.65</td></tr>
+                  <tr><th scope="row">Stage 1 only</th><td><span aria-label="enabled">✓</span></td><td><span aria-label="disabled">✗</span></td><td>19.37</td><td>72.00</td></tr>
+                  <tr><th scope="row">Stage 2 only</th><td><span aria-label="disabled">✗</span></td><td><span aria-label="enabled">✓</span></td><td>52.46</td><td>73.47</td></tr>
+                  <tr class="ours"><th scope="row">Stage 1 + Stage 2</th><td><span aria-label="enabled">✓</span></td><td><span aria-label="enabled">✓</span></td><td>55.55</td><td>77.48</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </details>
+        </div>
+        <p class="caption-note">ADE20K uses DINOv2-L with the same downstream fine-tuning protocol across rows; the softmax reference is 56.73 mIoU. SAM-H is trained on an internal foreground-segmentation dataset and evaluated on SAM-HQ. “No alignment” skips Stages 1–2, not downstream training.</p>
+
+        <div class="insight-grid">
+          <article class="simple-card insight-card">
+            <p class="insight-stat">+29.54 mIoU</p>
+            <h3>Stage 2 drives representation recovery</h3>
+            <p>Stage 2 alone raises ADE20K performance from 22.92 to 52.46, closing 87.4% of the gap to the softmax teacher without changing the attention architecture. This supports pretrained-feature compatibility, rather than attention capacity alone, as a key bottleneck.</p>
+          </article>
+          <article class="simple-card insight-card">
+            <p class="insight-stat">+3.09 mIoU / +4.01 IoU</p>
+            <h3>Stage 1 is complementary, not sufficient</h3>
+            <p>Adding Stage 1 improves Stage 2 on both ADE20K and SAM-HQ. Its standalone effect depends on the task: ADE20K drops from 22.92 to 19.37, while foreground-segmentation IoU rises from 63.65 to 72.00 (+8.35).</p>
+          </article>
+          <article class="simple-card insight-card">
+            <p class="insight-stat">Local → global alignment</p>
+            <h3>Match the student’s actual forward pass</h3>
+            <p>Stage 1 matches attention on shared teacher inputs. Once all blocks are replaced, the student receives altered intermediate features. Stage 2 supervises the final representation on those actual inputs, allowing the full encoder to co-adapt instead of requiring every block to remain identical.</p>
+          </article>
+        </div>
+
+        <div class="ablation-evidence-grid">
+          <article>
+            <h3>Why adapt more than QKV?</h3>
+            <p class="evidence-intro">On DINOv2-L, full-network adaptation outperforms QKV-only tuning by 9.6 accuracy points and 6.73 mIoU. This supports adapting the wider encoder to the changed attention computation, rather than only its attention projections.</p>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th scope="col">Tuning scope</th><th scope="col">ImageNet-1K top-1 (%) ↑</th><th scope="col">ADE20K mIoU ↑</th></tr></thead>
+                <tbody>
+                  <tr><th scope="row">QKV only</th><td>76.4</td><td>48.82</td></tr>
+                  <tr class="ours"><th scope="row">Full network</th><td>86.0</td><td>55.55</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <p class="caption-note">DINOv2-L at 512²; this is a tuning-scope comparison, separate from the Stage 1/2 ablation above.</p>
+          </article>
+          <article>
+            <h3>Stage 1 also accelerates feature alignment</h3>
+            <figure class="figure-card initialization-figure">
+              <img src="assets/stage2-initialization.png" width="1364" height="943" loading="lazy" alt="DINOv2-L Stage-2 feature-MSE training curves with and without Stage 1 initialization; the Stage-1-initialized curve decreases faster.">
+              <figcaption>With Stage 1 initialization, Stage-2 feature-MSE decreases faster. Together with the task ablation, this supports Stage 1 as a useful initializer—not an independently reliable adapted model.</figcaption>
+            </figure>
+          </article>
+        </div>
+        <div class="insight-summary" id="central-lesson" role="note" aria-labelledby="central-lesson-label">
+          <p class="insight-summary-label" id="central-lesson-label">The central lesson</p>
+          <p class="insight-summary-title">Linearizing a VFM is a <strong>representation-transfer problem</strong>, not just an operator-approximation problem.</p>
+          <p class="insight-summary-detail">Local attention alignment becomes most useful when followed by global feature recovery.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="efficiency" aria-labelledby="efficiency-title">
+      <div class="container">
+        <h2 id="efficiency-title">Efficiency and Resolution</h2>
+        <p class="section-intro">Linear attention is not faster in every setting. On one H100 with DINOv2-L at batch size 1, the throughput crossover occurs between 256² and 512² input resolution.</p>
+        <div class="table-scroll efficiency-table">
+          <table>
+            <thead><tr><th scope="col">Input resolution</th><th scope="col">Softmax (images/s)</th><th scope="col">ViT-AdaLA (images/s)</th><th scope="col">Relative throughput</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">256²</th><td>62.83</td><td>49.28</td><td>0.78×</td></tr>
+              <tr><th scope="row">512²</th><td>36.52</td><td>41.56</td><td>1.14×</td></tr>
+              <tr class="ours"><th scope="row">1024²</th><td>7.07</td><td>15.95</td><td>2.26×</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption-note">At 1024² on Cityscapes, peak memory falls from 3.2836 GB to 1.3764 GB (−58.1%), while mIoU changes from 80.98 to 78.73. All throughput measurements above are end-to-end, batch size 1.</p>
+      </div>
+    </section>
+
+    <section class="section section-muted" id="transfer" aria-labelledby="transfer-title">
+      <div class="container">
+        <h2 id="transfer-title">Preserving Transferable Features</h2>
+        <p class="section-intro">After Stage 2, the DINOv2-L backbone can remain frozen while only a task head is trained. This is distinct from the full fine-tuning results above.</p>
+        <figure class="figure-card feature-figure">
+          <img src="assets/feature-comparison.png" width="1731" height="940" loading="lazy" alt="PCA-projected feature maps from the softmax DINOv2-L teacher, ViT-AdaLA, and Monarch attention.">
+          <figcaption>PCA projections of final-layer DINOv2-L features. ViT-AdaLA more closely tracks the softmax teacher than Monarch in these examples.</figcaption>
+        </figure>
+        <div class="table-scroll transfer-table">
+          <table>
+            <thead><tr><th scope="col">Frozen-backbone evaluation</th><th scope="col">Softmax teacher</th><th scope="col">ViT-AdaLA</th><th scope="col">Retained quality</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">ImageNet-1K linear probe</th><td>82.66</td><td>81.30</td><td>98.4%</td></tr>
+              <tr><th scope="row">Flowers-102 linear probe</th><td>99.71</td><td>99.37</td><td>99.7%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="caption-note">The teacher and linearized student use identical heads; all 304M backbone parameters remain frozen.</p>
+      </div>
+    </section>
+
+    <section class="section" id="citation" aria-labelledby="citation-title">
+      <div class="container narrow">
+        <h2 id="citation-title">BibTeX</h2>
+        <div class="citation-box">
+          <div class="citation-header"><span>Cite this work</span><button type="button" id="copy-citation">Copy citation</button></div>
+          <pre id="bibtex">@inproceedings{li2026vitadala,
+  title={ViT-AdaLA: Adapting Vision Transformers with Linear Attention},
+  author={Yifan Li and Seunghyun Yoon and Viet Dac Lai and Franck Dernoncourt and Jason Kuen and Yu Kong and Trung Bui},
+  booktitle={Advances in Neural Information Processing Systems (NeurIPS)},
+  year={2026}
+}</pre>
+          <span class="copy-status" id="copy-status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <span>ViT-AdaLA · NeurIPS 2026</span>
+      <span><a href="assets/ViT-AdaLA.pdf">Paper</a> · <a href="https://github.com/JackYFL/LinearViT_MT" target="_blank" rel="noopener noreferrer">Code</a></span>
+    </div>
+  </footer>
+</body>
+</html>

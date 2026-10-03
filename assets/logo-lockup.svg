@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 405 72" role="img" aria-labelledby="title desc">
+  <title id="title">ViT-AdaLA</title>
+  <desc id="desc">ViT-AdaLA wordmark with matching teacher and student patch grids connected by three alignment chevrons.</desc>
+  <g fill="#52606d">
+    <rect x="6" y="15" width="10" height="10" rx="2"/>
+    <rect x="19" y="15" width="10" height="10" rx="2"/>
+    <rect x="32" y="15" width="10" height="10" rx="2"/>
+    <rect x="6" y="28" width="10" height="10" rx="2"/>
+    <rect x="19" y="28" width="10" height="10" rx="2" fill="#d99843"/>
+    <rect x="32" y="28" width="10" height="10" rx="2"/>
+    <rect x="6" y="41" width="10" height="10" rx="2"/>
+    <rect x="19" y="41" width="10" height="10" rx="2"/>
+    <rect x="32" y="41" width="10" height="10" rx="2"/>
+  </g>
+  <g fill="#2c6e7f">
+    <rect x="102" y="15" width="10" height="10" rx="2"/>
+    <rect x="115" y="15" width="10" height="10" rx="2"/>
+    <rect x="128" y="15" width="10" height="10" rx="2"/>
+    <rect x="102" y="28" width="10" height="10" rx="2"/>
+    <rect x="115" y="28" width="10" height="10" rx="2" fill="#d99843"/>
+    <rect x="128" y="28" width="10" height="10" rx="2"/>
+    <rect x="102" y="41" width="10" height="10" rx="2"/>
+    <rect x="115" y="41" width="10" height="10" rx="2"/>
+    <rect x="128" y="41" width="10" height="10" rx="2"/>
+  </g>
+  <g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m52 23 8 10-8 10" stroke="#52606d"/>
+    <path d="m68 23 8 10-8 10" stroke="#2575a8"/>
+    <path d="m84 23 8 10-8 10" stroke="#2c6e7f"/>
+  </g>
+  <text x="159" y="49" fill="#22313f" font-family="Segoe UI, Arial, sans-serif" font-size="42" font-weight="700" letter-spacing="-1.5">ViT-AdaLA</text>
+</svg>
